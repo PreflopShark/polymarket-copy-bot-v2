@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket Copy Bot</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="/static/app.js"></script>
+</head>
+<body x-data>
+    <!-- Header -->
+    <header class="header">
+        <h1>POLYMARKET COPY BOT</h1>
+        <div class="header-badges">
+            <span class="badge"
+                  :class="$store.app.config.dry_run ? 'badge-dry' : 'badge-live'"
+                  x-text="$store.app.config.dry_run ? 'DRY RUN' : 'LIVE'"></span>
+            <span class="badge"
+                  :class="$store.app.wsConnected ? 'badge-connected' : 'badge-disconnected'"
+                  x-text="$store.app.wsConnected ? 'CONNECTED' : 'DISCONNECTED'"></span>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="main">
+        <!-- Sidebar - Configuration -->
+        <aside class="sidebar">
+            <div class="card">
+                <h2 class="card-title">Configuration</h2>
+
+                <!-- Target Wallet -->
+                <div class="form-group">
+                    <label>Target Wallet</label>
+                    <div class="input-group">
+                        <input type="text"
+                               x-model="$store.app.walletInput"
+                               placeholder="0x... or profile URL"
+                               :disabled="$store.app.botState !== 'stopped'">
+                        <button class="btn btn-outline btn-sm"
+                                @click="$store.app.validateWallet()"
+                                :disabled="$store.app.walletValidating || $store.app.botState !== 'stopped'">
+                            <span x-show="!$store.app.walletValidating">Validate</span>
+                            <span x-show="$store.app.walletValidating" class="spinner"></span>
+                        </button>
+                    </div>
+                    <div class="validation-status"
+                         x-show="$store.app.walletValid !== null"
+                         :class="$store.app.walletValid ? 'valid' : 'invalid'">
+                        <span x-show="$store.app.walletValid">
+                            Valid <span x-show="$store.app.walletUsername">(@<span x-text="$store.app.walletUsername"></span>)</span>
+                        </span>
+                        <span x-show="!$store.app.walletValid">Invalid wallet</span>
+                    </div>
+                </div>
+
+                <!-- Trade Limits -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Max Trade ($)</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.max_trade_amount"
+                               min="1" step="1"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                    <div class="form-group">
+                        <label>Min Trade ($)</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.min_trade_amount"
+                               min="0.1" step="0.1"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min Price</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.min_price"
+                               min="0" max="1" step="0.01"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Price</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.max_price"
+                               min="0" max="1" step="0.01"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                </div>
+
+                <!-- Slippage & Polling -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Max Slippage</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.max_slippage"
+                               min="0" max="1" step="0.01"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                    <div class="form-group">
+                        <label>Poll Interval (s)</label>
+                        <input type="number"
+                               x-model.number="$store.app.config.poll_interval"
+                               min="0.1" max="5" step="0.1"
+                               :disabled="$store.app.botState !== 'stopped'">
+                    </div>
+                </div>
+
+                <!-- Initial Balance -->
+                <div class="form-group">
+                    <label>Initial Balance ($)</label>
+                    <input type="number"
+                           x-model.number="$store.app.config.initial_balance"
+                           min="100" step="100"
+                           :disabled="$store.app.botState !== 'stopped'">
+                </div>
+
+                <!-- Toggles -->
+                <div class="toggle-group">
+                    <span class="toggle-label">Dry Run Mode</span>
+                    <label class="toggle">
+                        <input type="checkbox"
+                               x-model="$store.app.config.dry_run"
+                               :disabled="$store.app.botState !== 'stopped'">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-group">
+                    <span class="toggle-label">Skip Opposite Side</span>
+                    <label class="toggle">
+                        <input type="checkbox"
+                               x-model="$store.app.config.skip_opposite_side"
+                               :disabled="$store.app.botState !== 'stopped'">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Asset Ratios (Collapsible) -->
+                <div class="form-group" x-data="{ open: false }">
+                    <div class="collapsible-header" @click="open = !open">
+                        <span class="toggle-label">Asset Ratios</span>
+                        <span x-text="open ? '−' : '+'"></span>
+                    </div>
+                    <div class="collapsible-content" x-show="open" x-collapse>
+                        <div class="form-row" style="margin-top: 0.5rem">
+                            <div class="form-group">
+                                <label>BTC</label>
+                                <input type="number"
+                                       x-model.number="$store.app.config.asset_ratios.BTC"
+                                       min="0" max="2" step="0.1"
+                                       :disabled="$store.app.botState !== 'stopped'">
+                            </div>
+                            <div class="form-group">
+                                <label>ETH</label>
+                                <input type="number"
+                                       x-model.number="$store.app.config.asset_ratios.ETH"
+                                       min="0" max="2" step="0.1"
+                                       :disabled="$store.app.botState !== 'stopped'">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>SOL</label>
+                            <input type="number"
+                                   x-model.number="$store.app.config.asset_ratios.SOL"
+                                   min="0" max="2" step="0.1"
+                                   :disabled="$store.app.botState !== 'stopped'">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button class="btn btn-primary btn-block"
+                        @click="$store.app.saveConfig()"
+                        :disabled="$store.app.botState !== 'stopped'">
+                    Save Configuration
+                </button>
+            </div>
+        </aside>
+
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Status Bar -->
+            <div class="card">
+                <div class="status-bar">
+                    <div class="status-indicator">
+                        <span class="status-dot" :class="$store.app.botState"></span>
+                        <span x-text="$store.app.botState.toUpperCase()"></span>
+                        <span class="runtime" x-show="$store.app.botState === 'running'">
+                            Runtime: <span x-text="formatRuntime($store.app.runtime)"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <button class="btn btn-success"
+                                x-show="$store.app.botState === 'stopped'"
+                                @click="$store.app.startBot()"
+                                :disabled="!$store.app.config.target_wallet">
+                            Start Bot
+                        </button>
+                        <button class="btn btn-danger"
+                                x-show="$store.app.botState === 'running'"
+                                @click="$store.app.stopBot()">
+                            Stop Bot
+                        </button>
+                        <button class="btn btn-outline"
+                                x-show="$store.app.botState === 'starting' || $store.app.botState === 'stopping'"
+                                disabled>
+                            <span class="spinner"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" x-text="$store.app.stats.trades_detected"></div>
+                    <div class="stat-label">Detected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" x-text="$store.app.stats.trades_copied"></div>
+                    <div class="stat-label">Copied</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" x-text="$store.app.stats.trades_skipped"></div>
+                    <div class="stat-label">Skipped</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" x-text="$store.app.stats.poll_count"></div>
+                    <div class="stat-label">Polls</div>
+                </div>
+            </div>
+
+            <!-- Balance Card -->
+            <div class="card">
+                <h2 class="card-title">Portfolio</h2>
+                <div class="balance-grid">
+                    <div class="balance-item">
+                        <div class="balance-value" x-text="formatCurrency($store.app.portfolio.usdc_balance)"></div>
+                        <div class="balance-label">USDC Balance</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-value" x-text="formatCurrency($store.app.portfolio.portfolio_value)"></div>
+                        <div class="balance-label">Portfolio Value</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-value"
+                             :class="$store.app.portfolio.pnl >= 0 ? 'text-positive' : 'text-negative'"
+                             x-text="formatCurrency($store.app.portfolio.pnl) + ' (' + formatPercent($store.app.portfolio.pnl_percentage) + ')'">
+                        </div>
+                        <div class="balance-label">P&L</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Positions Table -->
+            <div class="card">
+                <h2 class="card-title">Open Positions</h2>
+                <div class="table-container">
+                    <table x-show="$store.app.portfolio.positions.length > 0">
+                        <thead>
+                            <tr>
+                                <th>Market</th>
+                                <th class="text-right">Shares</th>
+                                <th class="text-right">Avg Price</th>
+                                <th class="text-right">Cost Basis</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="pos in $store.app.portfolio.positions" :key="pos.token_id">
+                                <tr>
+                                    <td x-text="pos.market.substring(0, 40)"></td>
+                                    <td class="text-right" x-text="pos.shares.toFixed(2)"></td>
+                                    <td class="text-right" x-text="(pos.avg_price * 100).toFixed(0) + '%'"></td>
+                                    <td class="text-right" x-text="formatCurrency(pos.cost_basis)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div class="empty-state" x-show="$store.app.portfolio.positions.length === 0">
+                        No open positions
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <div class="log-header">
+                    <h2 class="card-title" style="margin-bottom: 0">Activity Log</h2>
+                    <button class="btn btn-outline btn-sm" @click="$store.app.clearLogs()">Clear</button>
+                </div>
+                <div class="log-container">
+                    <template x-for="(log, index) in $store.app.logs" :key="index">
+                        <div class="log-entry">
+                            <span class="log-time" x-text="log.time"></span>
+                            <span class="log-level" :class="log.level" x-text="log.level"></span>
+                            <span class="log-message" x-text="log.message"></span>
+                        </div>
+                    </template>
+                    <div class="empty-state" x-show="$store.app.logs.length === 0">
+                        No activity yet. Start the bot to see logs.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Session Summary Modal -->
+    <div class="modal-overlay" x-show="$store.app.showSummary" x-cloak>
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Session Summary</h3>
+                <button class="modal-close" @click="$store.app.closeSummary()">&times;</button>
+            </div>
+
+            <template x-if="$store.app.sessionSummary">
+                <div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">Runtime</div>
+                            <div class="summary-value" x-text="$store.app.sessionSummary.runtime_formatted"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Mode</div>
+                            <div class="summary-value" x-text="$store.app.sessionSummary.mode"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Trades Detected</div>
+                            <div class="summary-value" x-text="$store.app.sessionSummary.stats?.trades_detected || 0"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Trades Copied</div>
+                            <div class="summary-value" x-text="$store.app.sessionSummary.stats?.trades_copied || 0"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Trades Skipped</div>
+                            <div class="summary-value" x-text="$store.app.sessionSummary.stats?.trades_skipped || 0"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Final Balance</div>
+                            <div class="summary-value" x-text="formatCurrency($store.app.sessionSummary.paper?.usdc_balance || 0)"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">P&L</div>
+                            <div class="summary-value"
+                                 :class="($store.app.sessionSummary.paper?.pnl || 0) >= 0 ? 'text-positive' : 'text-negative'"
+                                 x-text="formatCurrency($store.app.sessionSummary.paper?.pnl || 0)"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">P&L %</div>
+                            <div class="summary-value"
+                                 :class="($store.app.sessionSummary.paper?.pnl_percentage || 0) >= 0 ? 'text-positive' : 'text-negative'"
+                                 x-text="formatPercent($store.app.sessionSummary.paper?.pnl_percentage || 0)"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                        <button class="btn btn-primary" @click="$store.app.exportSummary()">Export JSON</button>
+                        <button class="btn btn-outline" @click="$store.app.closeSummary()">Close</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</body>
+</html>
