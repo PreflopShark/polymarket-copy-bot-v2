@@ -1,5 +1,6 @@
-# Polymarket Copy Bot Dependencies
-requests>=2.31.0
+# Polymarket Copy Bot v2 Dependencies
+py-clob-client>=0.17.0
 python-dotenv>=1.0.0
-websockets>=12.0
+aiohttp>=3.9.0
 httpx>=0.25.0
+eth-account>=0.10.0
