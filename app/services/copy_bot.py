@@ -1,351 +1,421 @@
-"""Copy bot service - main trading logic with event hooks."""
+"""
+Copy bot service - main trading logic with event-driven architecture.
+
+Uses EventBus for decoupled communication with UI components.
+"""
 
 import asyncio
 import logging
-import time
-from typing import Optional, Callable, List, Dict, Any
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-
-import aiohttp
+from dataclasses import dataclass, field
+from enum import Enum
 
 from ..config import BotConfig
-from .polymarket_client import PolymarketClient
-from .trade_monitor import TradeMonitor
-from .paper_trader import PaperTrader
+from ..core.events import EventBus, EventType
+from ..core.interfaces import (
+    TradingClient,
+    TradeMonitor,
+    TradeExecutor,
+    TradeInfo,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class CopyBot:
-    """Main copy trading bot with event hooks for web UI."""
+class SkipReason(str, Enum):
+    """Reasons for skipping a trade."""
+    PRICE_HIGH = "price_high"
+    PRICE_LOW = "price_low"
+    NOT_BUY = "not_buy"
+    SLIPPAGE = "slippage"
+    EXECUTION_FAILED = "execution_failed"
+    INSUFFICIENT_BALANCE = "insufficient_balance"
 
-    def __init__(self, config: BotConfig):
-        self.config = config
-        self.pm_client = PolymarketClient(config)
-        self.monitor = TradeMonitor(config)
-        self.paper_trader = PaperTrader(config.initial_balance) if config.dry_run else None
+
+@dataclass
+class BotStats:
+    """Bot statistics."""
+    trades_detected: int = 0
+    trades_copied: int = 0
+    trades_skipped: int = 0
+    poll_count: int = 0
+    skip_reasons: Dict[str, int] = field(default_factory=dict)
+
+    def record_skip(self, reason: SkipReason) -> None:
+        """Record a skip with reason."""
+        self.trades_skipped += 1
+        self.skip_reasons[reason.value] = self.skip_reasons.get(reason.value, 0) + 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "trades_detected": self.trades_detected,
+            "trades_copied": self.trades_copied,
+            "trades_skipped": self.trades_skipped,
+            "poll_count": self.poll_count,
+        }
+
+
+class CopyBot:
+    """
+    Main copy trading bot with event-driven architecture.
+
+    Uses dependency injection for trading client, monitor, and executor.
+    Emits events through EventBus for UI updates.
+    """
+
+    def __init__(
+        self,
+        config: BotConfig,
+        event_bus: EventBus,
+        trading_client: TradingClient,
+        trade_monitor: TradeMonitor,
+        trade_executor: Optional[TradeExecutor] = None,
+    ):
+        self._config = config
+        self._event_bus = event_bus
+        self._client = trading_client
+        self._monitor = trade_monitor
+        self._executor = trade_executor
 
         # State
-        self.start_time: Optional[datetime] = None
-        self.trades_detected = 0
-        self.trades_copied = 0
-        self.trades_skipped = 0
-        self.poll_count = 0
+        self._start_time: Optional[datetime] = None
         self._stop_requested = False
+        self._stats = BotStats()
 
-        # Skip reason tracking
-        self.skip_reasons: Dict[str, int] = {}
+        # Recent trades for history
+        self._recent_trades: List[Dict[str, Any]] = []
+        self._max_recent_trades = 100
 
-        # Recent trades for UI
-        self.recent_trades: List[dict] = []
-        self.max_recent_trades = 100
+    @property
+    def is_running(self) -> bool:
+        """Check if bot is running."""
+        return self._start_time is not None and not self._stop_requested
 
-        # Event callbacks
-        self._on_log: Optional[Callable] = None
-        self._on_trade: Optional[Callable] = None
-        self._on_status: Optional[Callable] = None
+    @property
+    def stats(self) -> BotStats:
+        """Get current statistics."""
+        return self._stats
 
-    def set_callbacks(self,
-                      on_log: Optional[Callable] = None,
-                      on_trade: Optional[Callable] = None,
-                      on_status: Optional[Callable] = None):
-        """Set event callbacks for real-time updates."""
-        self._on_log = on_log
-        self._on_trade = on_trade
-        self._on_status = on_status
+    @property
+    def executor(self) -> Optional[TradeExecutor]:
+        """Get the trade executor."""
+        return self._executor
 
-    async def _emit_log(self, level: str, message: str):
-        """Emit log event."""
-        if self._on_log:
-            await self._on_log({
-                "type": "log",
-                "level": level,
-                "message": message,
-                "timestamp": datetime.now().isoformat(),
-            })
-
-    async def _emit_trade(self, trade_type: str, data: dict):
-        """Emit trade event."""
-        # Add to recent trades
-        trade_record = {
-            "timestamp": datetime.now().isoformat(),
-            "type": trade_type,
-            **data
-        }
-        self.recent_trades.insert(0, trade_record)
-        if len(self.recent_trades) > self.max_recent_trades:
-            self.recent_trades.pop()
-
-        if self._on_trade:
-            await self._on_trade(trade_record)
-
-    async def _emit_status(self):
-        """Emit status update."""
-        if self._on_status:
-            await self._on_status(self.get_status())
-
-    def request_stop(self):
+    def request_stop(self) -> None:
         """Request graceful stop."""
         self._stop_requested = True
 
-    def get_status(self) -> dict:
-        """Get current bot status."""
-        runtime = 0
-        if self.start_time:
-            runtime = (datetime.now() - self.start_time).total_seconds()
+    async def _emit(self, event_type: EventType, **data) -> None:
+        """Emit an event through the event bus."""
+        await self._event_bus.emit(event_type, **data)
 
-        result = {
-            "running": not self._stop_requested and self.start_time is not None,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "runtime_seconds": runtime,
-            "stats": {
-                "trades_detected": self.trades_detected,
-                "trades_copied": self.trades_copied,
-                "trades_skipped": self.trades_skipped,
-                "poll_count": self.poll_count,
-            },
-            "skip_reasons": self.skip_reasons,
+    async def _log(self, level: str, message: str) -> None:
+        """Emit a log event."""
+        await self._emit(EventType.LOG, level=level, message=message)
+
+    def _add_recent_trade(self, trade_type: str, data: Dict[str, Any]) -> None:
+        """Add trade to recent history."""
+        record = {
+            "timestamp": datetime.now().isoformat(),
+            "type": trade_type,
+            **data,
         }
-
-        # Add paper trading stats
-        if self.paper_trader:
-            result["paper"] = self.paper_trader.get_summary()
-
-        return result
+        self._recent_trades.insert(0, record)
+        if len(self._recent_trades) > self._max_recent_trades:
+            self._recent_trades.pop()
 
     async def connect(self) -> bool:
         """Initialize connections."""
-        return self.pm_client.connect()
+        return self._client.connect()
 
-    async def process_trade(self, trade: dict):
-        """Process a detected trade."""
-        # Only process TRADE activities
-        if trade.get("type", "").upper() != "TRADE":
-            return
+    async def _evaluate_trade(self, trade: TradeInfo) -> Optional[Dict[str, Any]]:
+        """
+        Evaluate whether to copy a trade based on filters.
 
-        market_name = trade.get("title", "Unknown")[:50]
-        side = trade.get("side", "").upper()
-        price = float(trade.get("price", 0))
-        size = float(trade.get("usdcSize", 0))
-        outcome = trade.get("outcome", "")
-        token_id = trade.get("asset", "")
-
-        self.trades_detected += 1
-
-        await self._emit_log("INFO", f"Trade detected: {side} {outcome} @ {price:.0%} | ${size:.2f}")
-        await self._emit_trade("detected", {
-            "market": market_name,
-            "side": side,
-            "outcome": outcome,
-            "price": price,
-            "size": size,
-        })
-
+        Returns decision dict if should execute, None if should skip.
+        """
         # Price filter - max
-        if price > self.config.max_price:
-            reason = f"Price {price:.0%} > max {self.config.max_price:.0%}"
-            await self._emit_log("INFO", f"SKIP: {reason}")
-            await self._emit_trade("skipped", {
-                "market": market_name,
-                "side": side,
-                "price": price,
-                "size": size,
-                "reason": reason,
-            })
-            self.trades_skipped += 1
-            self.skip_reasons["price_high"] = self.skip_reasons.get("price_high", 0) + 1
-            if self.paper_trader:
-                self.paper_trader.record_skipped()
-            return
+        if trade.price > self._config.max_price:
+            return {
+                "skip": True,
+                "reason": SkipReason.PRICE_HIGH,
+                "message": f"Price {trade.price:.0%} > max {self._config.max_price:.0%}",
+            }
 
         # Price filter - min
-        if price < self.config.min_price:
-            reason = f"Price {price:.0%} < min {self.config.min_price:.0%}"
-            await self._emit_log("INFO", f"SKIP: {reason}")
-            await self._emit_trade("skipped", {
-                "market": market_name,
-                "side": side,
-                "price": price,
-                "size": size,
-                "reason": reason,
-            })
-            self.trades_skipped += 1
-            self.skip_reasons["price_low"] = self.skip_reasons.get("price_low", 0) + 1
-            if self.paper_trader:
-                self.paper_trader.record_skipped()
-            return
+        if trade.price < self._config.min_price:
+            return {
+                "skip": True,
+                "reason": SkipReason.PRICE_LOW,
+                "message": f"Price {trade.price:.0%} < min {self._config.min_price:.0%}",
+            }
 
         # Only copy BUY trades
-        if side != "BUY":
-            reason = "Not a BUY trade"
-            await self._emit_log("INFO", f"SKIP: {reason}")
-            await self._emit_trade("skipped", {
-                "market": market_name,
-                "side": side,
-                "price": price,
-                "size": size,
-                "reason": reason,
-            })
-            self.trades_skipped += 1
-            self.skip_reasons["not_buy"] = self.skip_reasons.get("not_buy", 0) + 1
-            if self.paper_trader:
-                self.paper_trader.record_skipped()
-            return
+        if trade.side != "BUY":
+            return {
+                "skip": True,
+                "reason": SkipReason.NOT_BUY,
+                "message": "Not a BUY trade",
+            }
 
         # Calculate our trade size
-        our_size = min(size, self.config.max_trade_amount)
-        our_size = max(our_size, self.config.min_trade_amount)
+        our_size = min(trade.size, self._config.max_trade_amount)
+        our_size = max(our_size, self._config.min_trade_amount)
 
-        # Execute trade (dry run mode)
-        if self.config.dry_run and self.paper_trader:
-            # Check slippage
-            book = self.pm_client.get_order_book(token_id)
-            current_price = price
+        # Check slippage
+        book = self._client.get_order_book(trade.token_id)
+        current_price = trade.price
 
-            if book and book.asks:
-                sorted_asks = sorted(book.asks, key=lambda x: float(x.price))
-                current_price = float(sorted_asks[0].price)
+        if book and book.best_ask is not None:
+            current_price = book.best_ask
 
-            slippage = abs(current_price - price) / price if price > 0 else 0
+        slippage = abs(current_price - trade.price) / trade.price if trade.price > 0 else 0
 
-            if slippage > self.config.max_slippage:
-                reason = f"Slippage {slippage:.1%} > max {self.config.max_slippage:.0%}"
-                await self._emit_log("WARN", f"SKIP: {reason}")
-                await self._emit_trade("skipped", {
-                    "market": market_name,
-                    "side": side,
-                    "price": price,
-                    "size": size,
-                    "slippage": slippage,
-                    "reason": reason,
-                })
-                self.trades_skipped += 1
-                self.skip_reasons["slippage"] = self.skip_reasons.get("slippage", 0) + 1
-                self.paper_trader.record_skipped()
-                return
+        if slippage > self._config.max_slippage:
+            return {
+                "skip": True,
+                "reason": SkipReason.SLIPPAGE,
+                "message": f"Slippage {slippage:.1%} > max {self._config.max_slippage:.0%}",
+                "slippage": slippage,
+            }
 
-            # Execute paper trade
-            success = self.paper_trader.execute_trade(
-                token_id=token_id,
-                market_name=market_name,
-                side=side,
-                size=our_size,
-                price=current_price,
+        return {
+            "skip": False,
+            "size": our_size,
+            "price": current_price,
+            "slippage": slippage,
+        }
+
+    async def process_trade(self, raw_trade: Dict[str, Any]) -> None:
+        """Process a detected trade."""
+        # Only process TRADE activities
+        if raw_trade.get("type", "").upper() != "TRADE":
+            return
+
+        trade = TradeInfo.from_activity(raw_trade)
+        self._stats.trades_detected += 1
+
+        await self._log("INFO", f"Trade detected: {trade.side} {trade.outcome} @ {trade.price:.0%} | ${trade.size:.2f}")
+        await self._emit(
+            EventType.TRADE_DETECTED,
+            market=trade.market_name,
+            side=trade.side,
+            outcome=trade.outcome,
+            price=trade.price,
+            size=trade.size,
+        )
+
+        # Evaluate the trade
+        decision = await self._evaluate_trade(trade)
+
+        if decision is None or decision.get("skip"):
+            reason = decision.get("reason", SkipReason.EXECUTION_FAILED) if decision else SkipReason.EXECUTION_FAILED
+            message = decision.get("message", "Unknown reason") if decision else "No decision"
+
+            await self._log("INFO", f"SKIP: {message}")
+            await self._emit(
+                EventType.TRADE_SKIPPED,
+                market=trade.market_name,
+                side=trade.side,
+                price=trade.price,
+                size=trade.size,
+                reason=message,
             )
 
-            if success:
-                await self._emit_log("INFO", f"[PAPER] Executed: {side} ${our_size:.2f} @ {current_price:.0%}")
-                await self._emit_log("INFO", f"[PAPER] Balance: ${self.paper_trader.usdc_balance:.2f}")
-                await self._emit_trade("copied", {
-                    "market": market_name,
-                    "side": side,
-                    "outcome": outcome,
+            self._stats.record_skip(reason)
+            self._add_recent_trade("skipped", {
+                "market": trade.market_name,
+                "side": trade.side,
+                "price": trade.price,
+                "size": trade.size,
+                "reason": message,
+            })
+
+            if self._executor:
+                from .paper_trader import PaperTrader
+                if isinstance(self._executor, PaperTrader):
+                    self._executor.record_skipped()
+            return
+
+        # Execute the trade
+        if self._executor and self._config.dry_run:
+            our_size = decision.get("size", trade.size)
+            current_price = decision.get("price", trade.price)
+            slippage = decision.get("slippage", 0)
+
+            # Create modified trade with our size/price
+            exec_trade = TradeInfo(
+                token_id=trade.token_id,
+                market_name=trade.market_name,
+                side=trade.side,
+                outcome=trade.outcome,
+                price=current_price,
+                size=our_size,
+                tx_hash=trade.tx_hash,
+                timestamp=trade.timestamp,
+            )
+
+            result = await self._executor.execute(exec_trade, decision)
+
+            if result.success:
+                await self._log("INFO", f"[PAPER] Executed: {trade.side} ${our_size:.2f} @ {current_price:.0%}")
+
+                from .paper_trader import PaperTrader
+                if isinstance(self._executor, PaperTrader):
+                    await self._log("INFO", f"[PAPER] Balance: ${self._executor.balance:.2f}")
+
+                await self._emit(
+                    EventType.TRADE_COPIED,
+                    market=trade.market_name,
+                    side=trade.side,
+                    outcome=trade.outcome,
+                    price=current_price,
+                    size=our_size,
+                    slippage=slippage,
+                )
+
+                self._stats.trades_copied += 1
+                self._add_recent_trade("copied", {
+                    "market": trade.market_name,
+                    "side": trade.side,
+                    "outcome": trade.outcome,
                     "price": current_price,
                     "size": our_size,
                     "slippage": slippage,
                 })
-                self.trades_copied += 1
             else:
-                await self._emit_trade("skipped", {
-                    "market": market_name,
-                    "side": side,
-                    "price": price,
-                    "size": size,
-                    "reason": "Execution failed",
+                await self._emit(
+                    EventType.TRADE_FAILED,
+                    market=trade.market_name,
+                    side=trade.side,
+                    price=trade.price,
+                    size=trade.size,
+                    reason=result.message,
+                )
+
+                self._stats.record_skip(SkipReason.EXECUTION_FAILED)
+                self._add_recent_trade("skipped", {
+                    "market": trade.market_name,
+                    "side": trade.side,
+                    "price": trade.price,
+                    "size": trade.size,
+                    "reason": result.message,
                 })
-                self.trades_skipped += 1
-                self.skip_reasons["execution_failed"] = self.skip_reasons.get("execution_failed", 0) + 1
 
-        await self._emit_status()
+        # Emit status update
+        await self._emit(EventType.STATUS_UPDATE, **self.get_status())
 
-    async def run(self) -> dict:
+    async def run(self) -> Dict[str, Any]:
         """Main bot loop. Returns session summary on completion."""
-        self.start_time = datetime.now()
+        self._start_time = datetime.now()
         self._stop_requested = False
+        self._stats = BotStats()
 
-        await self._emit_log("INFO", "Connecting to Polymarket...")
+        await self._emit(EventType.BOT_STARTING)
+        await self._log("INFO", "Connecting to Polymarket...")
 
         if not await self.connect():
-            await self._emit_log("ERROR", "Failed to connect to Polymarket")
+            await self._log("ERROR", "Failed to connect to Polymarket")
+            await self._emit(EventType.BOT_ERROR, error="Connection failed")
             return self.get_session_summary()
 
         # Get initial balance
-        balance = self.pm_client.get_balance()
+        balance = self._client.get_balance()
         if balance is not None:
-            await self._emit_log("INFO", f"USDC Balance: ${balance:.2f}")
+            await self._log("INFO", f"USDC Balance: ${balance:.2f}")
+            await self._emit(EventType.BALANCE_UPDATE, balance=balance)
 
-        await self._emit_log("INFO", "Starting trade monitor...")
-        await self._emit_status()
+        await self._log("INFO", "Starting trade monitor...")
+        await self._emit(EventType.BOT_STARTED, start_time=self._start_time.isoformat())
+        await self._emit(EventType.STATUS_UPDATE, **self.get_status())
 
-        async with aiohttp.ClientSession() as session:
-            # Initial fetch to establish baseline
-            initial_trades = await self.monitor.fetch_trades(session)
-            self.monitor.filter_new_trades(initial_trades)
-            await self._emit_log("INFO", "Baseline established. Watching for new trades...")
+        # Initial fetch to establish baseline
+        initial_trades = await self._monitor.fetch_trades()
+        self._monitor.filter_new_trades(initial_trades)
+        await self._log("INFO", "Baseline established. Watching for new trades...")
 
-            status_interval = int(30 / self.config.poll_interval)
+        status_interval = int(30 / self._config.poll_interval)
 
-            while not self._stop_requested:
-                try:
-                    trades = await self.monitor.fetch_trades(session)
-                    new_trades = self.monitor.filter_new_trades(trades)
+        while not self._stop_requested:
+            try:
+                trades = await self._monitor.fetch_trades()
+                new_trades = self._monitor.filter_new_trades(trades)
 
-                    self.poll_count += 1
+                self._stats.poll_count += 1
 
-                    # Process new trades (oldest first)
-                    for trade in reversed(new_trades):
-                        if self._stop_requested:
-                            break
-                        await self.process_trade(trade)
+                # Process new trades (oldest first)
+                for trade in reversed(new_trades):
+                    if self._stop_requested:
+                        break
+                    await self.process_trade(trade)
 
-                    # Periodic status
-                    if self.poll_count % status_interval == 0:
-                        await self._emit_log("INFO",
-                            f"[SCAN] {self.poll_count} polls | "
-                            f"Detected: {self.trades_detected} | "
-                            f"Copied: {self.trades_copied} | "
-                            f"Skipped: {self.trades_skipped}"
-                        )
-                        await self._emit_status()
+                # Periodic status
+                if self._stats.poll_count % status_interval == 0:
+                    await self._log(
+                        "INFO",
+                        f"[SCAN] {self._stats.poll_count} polls | "
+                        f"Detected: {self._stats.trades_detected} | "
+                        f"Copied: {self._stats.trades_copied} | "
+                        f"Skipped: {self._stats.trades_skipped}"
+                    )
+                    await self._emit(EventType.STATUS_UPDATE, **self.get_status())
 
-                    await asyncio.sleep(self.config.poll_interval)
+                await asyncio.sleep(self._config.poll_interval)
 
-                except asyncio.CancelledError:
-                    break
-                except Exception as e:
-                    await self._emit_log("ERROR", f"Error in main loop: {e}")
-                    await asyncio.sleep(1)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                await self._log("ERROR", f"Error in main loop: {e}")
+                await asyncio.sleep(1)
 
-        await self._emit_log("INFO", "Bot stopped.")
+        await self._log("INFO", "Bot stopped.")
+        await self._emit(EventType.BOT_STOPPED)
         return self.get_session_summary()
 
-    def get_session_summary(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
+        """Get current bot status."""
+        runtime = 0
+        if self._start_time:
+            runtime = (datetime.now() - self._start_time).total_seconds()
+
+        result = {
+            "running": self.is_running,
+            "start_time": self._start_time.isoformat() if self._start_time else None,
+            "runtime_seconds": runtime,
+            "stats": self._stats.to_dict(),
+            "skip_reasons": self._stats.skip_reasons,
+        }
+
+        # Add executor stats if available
+        if self._executor:
+            result["paper"] = self._executor.get_stats()
+
+        return result
+
+    def get_session_summary(self) -> Dict[str, Any]:
         """Generate session summary."""
         runtime = 0
-        if self.start_time:
-            runtime = (datetime.now() - self.start_time).total_seconds()
+        if self._start_time:
+            runtime = (datetime.now() - self._start_time).total_seconds()
 
         summary = {
-            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "start_time": self._start_time.isoformat() if self._start_time else None,
             "end_time": datetime.now().isoformat(),
             "runtime_seconds": runtime,
             "runtime_formatted": f"{runtime / 3600:.2f} hours",
-            "mode": "dry_run" if self.config.dry_run else "live",
-            "target_wallet": self.config.target_wallet,
-            "stats": {
-                "trades_detected": self.trades_detected,
-                "trades_copied": self.trades_copied,
-                "trades_skipped": self.trades_skipped,
-                "poll_count": self.poll_count,
-            },
-            "skip_reasons": self.skip_reasons,
+            "mode": "dry_run" if self._config.dry_run else "live",
+            "target_wallet": self._config.target_wallet,
+            "stats": self._stats.to_dict(),
+            "skip_reasons": self._stats.skip_reasons,
         }
 
-        if self.paper_trader:
-            summary["paper"] = self.paper_trader.get_summary()
+        if self._executor:
+            summary["paper"] = self._executor.get_stats()
 
         return summary
 
-    def get_recent_trades(self, limit: int = 50) -> List[dict]:
+    def get_recent_trades(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get recent trades."""
-        return self.recent_trades[:limit]
+        return self._recent_trades[:limit]

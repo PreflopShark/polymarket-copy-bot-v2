@@ -24,15 +24,15 @@ async def websocket_endpoint(websocket: WebSocket):
         })
 
         # Send current status if bot is running
-        if manager.bot:
-            status = manager.get_status()
+        status = manager.get_status()
+        if status.get("stats"):
             await websocket.send_json({
                 "type": "status",
                 **status
             })
 
         # Send buffered logs
-        for log in manager.log_buffer:
+        for log in manager.get_log_buffer():
             await websocket.send_json(log)
 
         # Keep connection alive and handle incoming messages
@@ -40,7 +40,6 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 # Wait for messages (ping/pong or commands)
                 data = await websocket.receive_text()
-                # Could handle commands here if needed
                 logger.debug(f"WebSocket received: {data}")
             except WebSocketDisconnect:
                 break

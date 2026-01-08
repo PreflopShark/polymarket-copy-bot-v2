@@ -1,26 +1,53 @@
-"""Trade monitoring service - watches target trader for new trades."""
+"""
+Trade monitoring service.
+
+Watches target trader for new trades via Polymarket Data API.
+"""
 
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Set
 
 import aiohttp
 
 from ..config import BotConfig
+from ..core.interfaces import TradeMonitor as ITradeMonitor
 
 logger = logging.getLogger(__name__)
 
 
-class TradeMonitor:
-    """Monitors target trader for new trades."""
+class TargetTradeMonitor(ITradeMonitor):
+    """
+    Monitors a target trader for new trades.
 
-    def __init__(self, config: BotConfig):
+    Uses the Polymarket Data API to poll for activity and
+    filters out already-seen trades.
+    """
+
+    def __init__(self, config: BotConfig, session: Optional[aiohttp.ClientSession] = None):
         self.config = config
-        self.last_trade_id: Optional[str] = None
-        self.data_api = config.data_api_host
+        self._session = session
+        self._owns_session = session is None
+        self._last_trade_id: Optional[str] = None
+        self._seen_trades: Set[str] = set()
+        self._max_seen = 1000
 
-    async def fetch_trades(self, session: aiohttp.ClientSession) -> List[dict]:
-        """Fetch recent trades from target."""
-        url = f"{self.data_api}/activity"
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Get or create HTTP session."""
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
+            self._owns_session = True
+        return self._session
+
+    async def close(self) -> None:
+        """Close the HTTP session if we own it."""
+        if self._owns_session and self._session:
+            await self._session.close()
+            self._session = None
+
+    async def fetch_trades(self) -> List[Dict[str, Any]]:
+        """Fetch recent trades from target wallet."""
+        session = await self._get_session()
+        url = f"{self.config.data_api_host}/activity"
         params = {
             "user": self.config.target_wallet,
             "limit": 25,
@@ -32,41 +59,77 @@ class TradeMonitor:
                     data = await response.json()
                     return data if isinstance(data, list) else []
                 else:
-                    logger.warning(f"API returned status {response.status}")
+                    logger.warning(f"Data API returned status {response.status}")
                     return []
+        except aiohttp.ClientError as e:
+            logger.error(f"Network error fetching trades: {e}")
+            return []
         except Exception as e:
             logger.error(f"Error fetching trades: {e}")
             return []
 
-    def filter_new_trades(self, trades: List[dict]) -> List[dict]:
-        """Filter out trades we've already seen."""
+    def filter_new_trades(self, trades: List[Dict]) -> List[Dict]:
+        """
+        Filter out trades we've already seen.
+
+        Uses transaction hash as unique identifier.
+        On first call, establishes baseline and returns empty list.
+        """
         if not trades:
             return []
 
         # Sort by timestamp (newest first)
-        trades = sorted(trades, key=lambda t: float(t.get("timestamp", 0)), reverse=True)
+        trades = sorted(
+            trades,
+            key=lambda t: float(t.get("timestamp", 0)),
+            reverse=True
+        )
 
-        # First fetch - just record latest
-        if self.last_trade_id is None:
+        # First fetch - establish baseline
+        if self._last_trade_id is None:
             if trades:
-                self.last_trade_id = trades[0].get("transactionHash")
-                logger.info(f"Baseline trade: {trades[0].get('title', 'unknown')[:40]}")
+                self._last_trade_id = trades[0].get("transactionHash")
+                self._seen_trades.add(self._last_trade_id)
+                market = trades[0].get("title", "unknown")[:40]
+                logger.info(f"Baseline established: {market}")
             return []
 
-        # Find new trades
+        # Find new trades (those we haven't seen)
         new_trades = []
         for trade in trades:
-            trade_id = trade.get("transactionHash")
-            if trade_id == self.last_trade_id:
-                break
-            new_trades.append(trade)
+            tx_hash = trade.get("transactionHash")
+            if not tx_hash:
+                continue
 
-        # Update marker
+            # Stop at last seen trade
+            if tx_hash == self._last_trade_id:
+                break
+
+            # Skip if already seen (handles out-of-order arrivals)
+            if tx_hash in self._seen_trades:
+                continue
+
+            new_trades.append(trade)
+            self._seen_trades.add(tx_hash)
+
+        # Update last trade marker
         if new_trades:
-            self.last_trade_id = new_trades[0].get("transactionHash")
+            self._last_trade_id = new_trades[0].get("transactionHash")
+
+        # Cleanup seen trades to prevent memory growth
+        if len(self._seen_trades) > self._max_seen:
+            # Keep only recent half
+            self._seen_trades = set(list(self._seen_trades)[-self._max_seen // 2:])
 
         return new_trades
 
-    def reset(self):
-        """Reset the monitor state."""
-        self.last_trade_id = None
+    def reset(self) -> None:
+        """Reset monitor state for new session."""
+        self._last_trade_id = None
+        self._seen_trades.clear()
+        logger.info("Trade monitor reset")
+
+    @property
+    def is_initialized(self) -> bool:
+        """Check if monitor has established baseline."""
+        return self._last_trade_id is not None
