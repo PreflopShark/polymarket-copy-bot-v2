@@ -1,0 +1,36 @@
+{
+  "summary": {
+    "runtime_hours": 0.01,
+    "initial_balance": 100000.0,
+    "current_usdc": 99994.88,
+    "portfolio_value": 100000.0,
+    "pnl": 0.0,
+    "pnl_percent": 0.0,
+    "trades_detected": 1,
+    "trades_copied": 1,
+    "trades_skipped": 0,
+    "open_positions": 1
+  },
+  "positions": [
+    {
+      "token_id": "80552688645695070204353183872965709026654231534725817557379684569329741253097",
+      "market_name": "XRP Up or Down - January 7, 1AM ET",
+      "size": 8.39615355,
+      "entry_price": 0.6100000041090244,
+      "entry_time": "2026-01-06T22:04:42.440533",
+      "usdc_spent": 5.1216536999999995
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-06T22:04:42.440539",
+      "token_id": "80552688645695070204353183872965709026654231534725817557379684569329741253097",
+      "market_name": "XRP Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 5.1216536999999995,
+      "price": 0.6100000041090244,
+      "usdc_amount": 5.1216536999999995,
+      "original_trade_amount": 34.144358
+    }
+  ]
+}

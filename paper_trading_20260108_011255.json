@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "runtime_hours": 0.05,
+    "initial_balance": 1500.0,
+    "current_usdc": 1492.65,
+    "portfolio_value": 1500.0,
+    "pnl": 0.0,
+    "pnl_percent": 0.0,
+    "trades_detected": 2,
+    "trades_copied": 2,
+    "trades_skipped": 0,
+    "open_positions": 1
+  },
+  "positions": [
+    {
+      "token_id": "89136115008613215795433808313370674124301070276837970023710004548506505497693",
+      "market_name": "Ethereum Up or Down - January 8, 4AM ET",
+      "size": 10.122,
+      "entry_price": 0.7265915826911677,
+      "entry_time": "2026-01-08T01:10:32.937086",
+      "usdc_spent": 7.35456
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-08T01:10:32.937092",
+      "token_id": "89136115008613215795433808313370674124301070276837970023710004548506505497693",
+      "market_name": "Ethereum Up or Down - January 8, 4AM ET",
+      "side": "BUY",
+      "size": 2.484,
+      "price": 0.72,
+      "usdc_amount": 2.484,
+      "original_trade_amount": 82.8
+    },
+    {
+      "timestamp": "2026-01-08T01:10:32.940519",
+      "token_id": "89136115008613215795433808313370674124301070276837970023710004548506505497693",
+      "market_name": "Ethereum Up or Down - January 8, 4AM ET",
+      "side": "BUY",
+      "size": 4.87056,
+      "price": 0.73,
+      "usdc_amount": 4.87056,
+      "original_trade_amount": 162.352
+    }
+  ]
+}

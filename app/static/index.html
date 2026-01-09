@@ -15,7 +15,10 @@
         <div class="header-badges">
             <span class="badge"
                   :class="$store.app.config.dry_run ? 'badge-dry' : 'badge-live'"
-                  x-text="$store.app.config.dry_run ? 'DRY RUN' : 'LIVE'"></span>
+                  x-text="$store.app.config.dry_run ? 'PAPER TRADING' : 'LIVE'"></span>
+            <span class="badge"
+                  :class="$store.app.config.simulate_real_market ? 'badge-sim' : 'badge-instant'"
+                  x-text="$store.app.config.simulate_real_market ? 'REAL CONDITIONS' : 'INSTANT FILL'"></span>
             <span class="badge"
                   :class="$store.app.wsConnected ? 'badge-connected' : 'badge-disconnected'"
                   x-text="$store.app.wsConnected ? 'CONNECTED' : 'DISCONNECTED'"></span>
@@ -90,22 +93,38 @@
                     </div>
                 </div>
 
-                <!-- Slippage & Polling -->
-                <div class="form-row">
-                    <div class="form-group">
+                <!-- Slippage with Unit Toggle -->
+                <div class="form-group">
+                    <div class="label-row">
                         <label>Max Slippage</label>
-                        <input type="number"
-                               x-model.number="$store.app.config.max_slippage"
-                               min="0" max="1" step="0.01"
-                               :disabled="$store.app.botState !== 'stopped'">
+                        <button class="unit-toggle"
+                                @click="$store.app.toggleSlippageUnit()"
+                                :disabled="$store.app.botState !== 'stopped'">
+                            <span x-text="$store.app.slippageUnit === 'percent' ? '%' : '¢'"></span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Poll Interval (s)</label>
+                    <div class="input-with-unit">
                         <input type="number"
-                               x-model.number="$store.app.config.poll_interval"
-                               min="0.1" max="5" step="0.1"
+                               x-model.number="$store.app.slippageDisplay"
+                               @input="$store.app.updateSlippageConfig()"
+                               :min="$store.app.slippageUnit === 'percent' ? 0 : 0"
+                               :max="$store.app.slippageUnit === 'percent' ? 100 : 100"
+                               :step="$store.app.slippageUnit === 'percent' ? 0.5 : 1"
                                :disabled="$store.app.botState !== 'stopped'">
+                        <span class="input-unit" x-text="$store.app.slippageUnit === 'percent' ? '%' : '¢'"></span>
                     </div>
+                    <small class="form-hint" x-show="$store.app.slippageUnit === 'cents'">
+                        1 cent = 1% price difference
+                    </small>
+                </div>
+
+                <!-- Polling Interval -->
+                <div class="form-group">
+                    <label>Poll Interval (s)</label>
+                    <input type="number"
+                           x-model.number="$store.app.config.poll_interval"
+                           min="0.1" max="5" step="0.1"
+                           :disabled="$store.app.botState !== 'stopped'">
                 </div>
 
                 <!-- Initial Balance -->
@@ -119,10 +138,23 @@
 
                 <!-- Toggles -->
                 <div class="toggle-group">
-                    <span class="toggle-label">Dry Run Mode</span>
+                    <span class="toggle-label">Paper Trading Mode</span>
                     <label class="toggle">
                         <input type="checkbox"
                                x-model="$store.app.config.dry_run"
+                               :disabled="$store.app.botState !== 'stopped'">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-group">
+                    <div class="toggle-label-with-hint">
+                        <span class="toggle-label">Simulate Real Market</span>
+                        <small class="toggle-hint">Adds execution delay & partial fills</small>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox"
+                               x-model="$store.app.config.simulate_real_market"
                                :disabled="$store.app.botState !== 'stopped'">
                         <span class="toggle-slider"></span>
                     </label>
@@ -136,6 +168,19 @@
                                :disabled="$store.app.botState !== 'stopped'">
                         <span class="toggle-slider"></span>
                     </label>
+                </div>
+
+                <!-- Outcome Filter -->
+                <div class="form-group">
+                    <label>Outcome Filter</label>
+                    <select x-model="$store.app.config.outcome_filter"
+                            :disabled="$store.app.botState !== 'stopped'"
+                            class="form-select">
+                        <option value="all">All (Both UP & DOWN)</option>
+                        <option value="up">UP Only</option>
+                        <option value="down">DOWN Only</option>
+                    </select>
+                    <small class="form-hint">Filter hedging: only copy one side</small>
                 </div>
 
                 <!-- Asset Ratios (Collapsible) -->
@@ -178,6 +223,65 @@
                     Save Configuration
                 </button>
             </div>
+
+            <!-- All-Time Stats Card -->
+            <div class="card" x-show="$store.app.sessionHistory.length > 0" x-cloak>
+                <h2 class="card-title">All-Time Stats</h2>
+                <div class="all-time-stats">
+                    <div class="stat-row">
+                        <span>Sessions:</span>
+                        <span x-text="$store.app.allTimeStats.sessions_count"></span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Total Trades:</span>
+                        <span x-text="$store.app.allTimeStats.total_trades"></span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Total P&L:</span>
+                        <span :class="$store.app.allTimeStats.total_pnl >= 0 ? 'text-positive' : 'text-negative'"
+                              x-text="formatCurrency($store.app.allTimeStats.total_pnl)"></span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Realized P&L:</span>
+                        <span :class="$store.app.allTimeStats.total_realized_pnl >= 0 ? 'text-positive' : 'text-negative'"
+                              x-text="formatCurrency($store.app.allTimeStats.total_realized_pnl)"></span>
+                    </div>
+                </div>
+                <button class="btn btn-outline btn-sm btn-block"
+                        @click="if(confirm('Clear all session history?')) $store.app.clearAllSessions()"
+                        style="margin-top: 0.5rem">
+                    Clear All History
+                </button>
+            </div>
+
+            <!-- Last Session Card -->
+            <div class="card" x-show="$store.app.lastSession" x-cloak>
+                <h2 class="card-title">Last Session</h2>
+                <div class="last-session-info">
+                    <div class="last-session-row">
+                        <span>Saved:</span>
+                        <span x-text="new Date($store.app.lastSession?.timestamp).toLocaleString()"></span>
+                    </div>
+                    <div class="last-session-row">
+                        <span>Balance:</span>
+                        <span x-text="formatCurrency($store.app.lastSession?.config?.initial_balance || 0)"></span>
+                    </div>
+                    <div class="last-session-row">
+                        <span>Trades:</span>
+                        <span x-text="$store.app.lastSession?.stats?.trades_copied || 0"></span>
+                    </div>
+                    <div class="last-session-row">
+                        <span>P&L:</span>
+                        <span :class="($store.app.lastSession?.paper?.pnl || 0) >= 0 ? 'text-positive' : 'text-negative'"
+                              x-text="formatCurrency($store.app.lastSession?.paper?.pnl || 0)"></span>
+                    </div>
+                    <div class="last-session-row">
+                        <span>Realized:</span>
+                        <span :class="($store.app.lastSession?.paper?.realized_pnl || 0) >= 0 ? 'text-positive' : 'text-negative'"
+                              x-text="formatCurrency($store.app.lastSession?.paper?.realized_pnl || 0)"></span>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <!-- Dashboard -->
@@ -192,17 +296,23 @@
                             Runtime: <span x-text="formatRuntime($store.app.runtime)"></span>
                         </span>
                     </div>
-                    <div>
+                    <div class="btn-group">
                         <button class="btn btn-success"
                                 x-show="$store.app.botState === 'stopped'"
                                 @click="$store.app.startBot()"
                                 :disabled="!$store.app.config.target_wallet">
                             Start Bot
                         </button>
-                        <button class="btn btn-danger"
+                        <button class="btn btn-warning"
                                 x-show="$store.app.botState === 'running'"
                                 @click="$store.app.stopBot()">
                             Stop Bot
+                        </button>
+                        <button class="btn btn-danger"
+                                x-show="$store.app.botState === 'running'"
+                                @click="$store.app.killBot()"
+                                title="Force kill the bot immediately">
+                            Kill
                         </button>
                         <button class="btn btn-outline"
                                 x-show="$store.app.botState === 'starting' || $store.app.botState === 'stopping'"
@@ -238,6 +348,10 @@
                 <h2 class="card-title">Portfolio</h2>
                 <div class="balance-grid">
                     <div class="balance-item">
+                        <div class="balance-value" x-text="formatCurrency($store.app.portfolio.initial_balance || $store.app.config.initial_balance || 0)"></div>
+                        <div class="balance-label">Initial Balance</div>
+                    </div>
+                    <div class="balance-item">
                         <div class="balance-value" x-text="formatCurrency($store.app.portfolio.usdc_balance)"></div>
                         <div class="balance-label">USDC Balance</div>
                     </div>
@@ -247,17 +361,24 @@
                     </div>
                     <div class="balance-item">
                         <div class="balance-value"
-                             :class="$store.app.portfolio.pnl >= 0 ? 'text-positive' : 'text-negative'"
-                             x-text="formatCurrency($store.app.portfolio.pnl) + ' (' + formatPercent($store.app.portfolio.pnl_percentage) + ')'">
+                             :class="($store.app.portfolio.unrealized_pnl || 0) >= 0 ? 'text-positive' : 'text-negative'"
+                             x-text="formatCurrency($store.app.portfolio.unrealized_pnl || 0)">
                         </div>
-                        <div class="balance-label">P&L</div>
+                        <div class="balance-label">Unrealized P&L</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-value"
+                             :class="$store.app.portfolio.realized_pnl >= 0 ? 'text-positive' : 'text-negative'"
+                             x-text="formatCurrency($store.app.portfolio.realized_pnl || 0)">
+                        </div>
+                        <div class="balance-label">Realized P&L</div>
                     </div>
                 </div>
             </div>
 
             <!-- Positions Table -->
             <div class="card">
-                <h2 class="card-title">Open Positions</h2>
+                <h2 class="card-title">Open Positions (<span x-text="$store.app.portfolio.positions.length"></span>)</h2>
                 <div class="table-container">
                     <table x-show="$store.app.portfolio.positions.length > 0">
                         <thead>
@@ -343,7 +464,7 @@
                             <div class="summary-value" x-text="formatCurrency($store.app.sessionSummary.paper?.usdc_balance || 0)"></div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-label">P&L</div>
+                            <div class="summary-label">Unrealized P&L</div>
                             <div class="summary-value"
                                  :class="($store.app.sessionSummary.paper?.pnl || 0) >= 0 ? 'text-positive' : 'text-negative'"
                                  x-text="formatCurrency($store.app.sessionSummary.paper?.pnl || 0)"></div>

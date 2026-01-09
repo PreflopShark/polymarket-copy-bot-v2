@@ -31,6 +31,15 @@ class EventType(str, Enum):
     BALANCE_UPDATE = "balance.update"
     POSITION_UPDATE = "position.update"
 
+    # Pattern detection events
+    PATTERN_UPDATE = "pattern.update"
+    PATTERN_CHANGED = "pattern.changed"
+
+    # Position Intelligence events
+    CONVICTION_SCORE = "conviction.score"
+    SCALING_DETECTED = "scaling.detected"
+    TRADE_CLASSIFIED = "trade.classified"
+
     # Log events
     LOG = "log"
 
@@ -111,6 +120,8 @@ class EventBus:
     async def emit(self, event_type: EventType, **data) -> None:
         """Convenience method to emit an event."""
         event = Event(type=event_type, data=data)
+        if event_type in (EventType.TRADE_DETECTED, EventType.TRADE_COPIED, EventType.TRADE_SKIPPED):
+            logger.info(f"EventBus {id(self)} emit: {event_type.value} to {len(self._global_subscribers)} global subscribers")
         await self.publish(event)
 
     def get_history(self, event_type: Optional[EventType] = None, limit: int = 100) -> List[Event]:

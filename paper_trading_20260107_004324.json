@@ -1,0 +1,132 @@
+{
+  "summary": {
+    "runtime_hours": 0.02,
+    "initial_balance": 100000.0,
+    "current_usdc": 99999.1,
+    "portfolio_value": 100000.0,
+    "pnl": -0.0,
+    "pnl_percent": -0.0,
+    "trades_detected": 9,
+    "trades_copied": 9,
+    "trades_skipped": 0,
+    "open_positions": 3
+  },
+  "positions": [
+    {
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "size": 15.0,
+      "entry_price": 0.04,
+      "entry_time": "2026-01-07T00:42:29.015063",
+      "usdc_spent": 0.6
+    },
+    {
+      "token_id": "90715306515492031219437069539466582257925508124714696479935710365718610571362",
+      "market_name": "XRP Up or Down - January 7, 3AM ET",
+      "size": 0.39215676255632503,
+      "entry_price": 0.5100001302955326,
+      "entry_time": "2026-01-07T00:42:29.020434",
+      "usdc_spent": 0.2
+    },
+    {
+      "token_id": "49647661841475017635611406331986666292661862208508537103802505601016011341241",
+      "market_name": "Solana Up or Down - January 7, 3AM ET",
+      "size": 0.16129029368445472,
+      "entry_price": 0.6200001110769761,
+      "entry_time": "2026-01-07T00:42:29.037012",
+      "usdc_spent": 0.1
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-07T00:42:29.015068",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 0.2
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.017580",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 0.0908
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.020438",
+      "token_id": "90715306515492031219437069539466582257925508124714696479935710365718610571362",
+      "market_name": "XRP Up or Down - January 7, 3AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.5100001715001115,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 1.040816
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.023224",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 0.6668
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.025941",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 0.138666
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.028561",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 0.0344
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.031285",
+      "token_id": "101568490643013180631048189696872358435787827477978625981367663753199071978301",
+      "market_name": "Ethereum Up or Down - January 7, 3:30AM-3:45AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.04,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 4.0
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.034126",
+      "token_id": "90715306515492031219437069539466582257925508124714696479935710365718610571362",
+      "market_name": "XRP Up or Down - January 7, 3AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.5100000890909604,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 1.373877
+    },
+    {
+      "timestamp": "2026-01-07T00:42:29.037015",
+      "token_id": "49647661841475017635611406331986666292661862208508537103802505601016011341241",
+      "market_name": "Solana Up or Down - January 7, 3AM ET",
+      "side": "BUY",
+      "size": 0.1,
+      "price": 0.6200001110769761,
+      "usdc_amount": 0.1,
+      "original_trade_amount": 2.121052
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "session": {
+    "start_time": "2026-01-08T09:36:46.936996",
+    "end_time": "2026-01-08T09:51:47.754482",
+    "runtime": "0h 14m 59s"
+  },
+  "balances": {
+    "cash": 775.461473,
+    "positions": 591.85998456,
+    "portfolio_total": 591.8626922055
+  },
+  "stats": {
+    "trades_executed": 133,
+    "trades_skipped": 62,
+    "trades_failed": 1,
+    "total_volume": 297.19341583000005
+  },
+  "settings": {
+    "target_trader": "0x63ce342161250d705dc0b16df89036c8e5f9ba9a",
+    "copy_ratio": "20%",
+    "btc_ratio": "5%",
+    "eth_ratio": "8%",
+    "sol_ratio": "10%",
+    "min_trade": "$1.00",
+    "max_trade": "$50.00",
+    "max_slippage": "10%",
+    "poll_interval": "0.2s",
+    "dry_run": false
+  }
+}

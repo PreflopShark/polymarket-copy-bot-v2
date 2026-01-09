@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "runtime_hours": 0.11,
+    "initial_balance": 100000.0,
+    "current_usdc": 99995.02,
+    "portfolio_value": 100000.0,
+    "pnl": 0.0,
+    "pnl_percent": 0.0,
+    "trades_detected": 2,
+    "trades_copied": 2,
+    "trades_skipped": 0,
+    "open_positions": 2
+  },
+  "positions": [
+    {
+      "token_id": "9175169631326590246371125896534680968483432539816527910646674319817899574152",
+      "market_name": "Solana Up or Down - January 7, 12AM ET",
+      "size": 37.65,
+      "entry_price": 0.1,
+      "entry_time": "2026-01-06T21:46:14.536323",
+      "usdc_spent": 3.765
+    },
+    {
+      "token_id": "34035426449309095779089005961775941833331598997938624494849130075160612405212",
+      "market_name": "Solana Up or Down - January 7, 12AM ET",
+      "size": 1.4999999999999998,
+      "entry_price": 0.81,
+      "entry_time": "2026-01-06T21:46:14.536636",
+      "usdc_spent": 1.2149999999999999
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-06T21:46:14.536329",
+      "token_id": "9175169631326590246371125896534680968483432539816527910646674319817899574152",
+      "market_name": "Solana Up or Down - January 7, 12AM ET",
+      "side": "BUY",
+      "size": 3.765,
+      "price": 0.1,
+      "usdc_amount": 3.765,
+      "original_trade_amount": 25.1
+    },
+    {
+      "timestamp": "2026-01-06T21:46:14.536639",
+      "token_id": "34035426449309095779089005961775941833331598997938624494849130075160612405212",
+      "market_name": "Solana Up or Down - January 7, 12AM ET",
+      "side": "BUY",
+      "size": 1.2149999999999999,
+      "price": 0.81,
+      "usdc_amount": 1.2149999999999999,
+      "original_trade_amount": 8.1
+    }
+  ]
+}

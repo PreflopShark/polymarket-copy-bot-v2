@@ -57,9 +57,37 @@ class BotConfig(BaseSettings):
 
     # Strategy
     skip_opposite_side: bool = Field(default=True, alias="SKIP_OPPOSITE_SIDE")
+    outcome_filter: str = Field(default="all", alias="OUTCOME_FILTER",
+                                description="Filter trades by outcome: 'all', 'up', or 'down'")
+
+    # Auto pattern detection
+    auto_detect_pattern: bool = Field(default=True, alias="AUTO_DETECT_PATTERN",
+                                      description="Automatically detect and adapt to trader's pattern")
+    pattern_window_size: int = Field(default=20, alias="PATTERN_WINDOW_SIZE", ge=5, le=100,
+                                     description="Number of trades to analyze for pattern detection")
+    pattern_bias_threshold: float = Field(default=0.65, alias="PATTERN_BIAS_THRESHOLD", ge=0.5, le=0.95,
+                                          description="Threshold for detecting directional bias")
+    hedge_detection_enabled: bool = Field(default=True, alias="HEDGE_DETECTION_ENABLED",
+                                          description="Skip trades that complete a hedge")
+    hedge_time_window: int = Field(default=300, alias="HEDGE_TIME_WINDOW", ge=60, le=3600,
+                                   description="Time window (seconds) to detect hedge pairs")
+
+    # Position Intelligence
+    position_tracking_enabled: bool = Field(default=True, alias="POSITION_TRACKING_ENABLED",
+                                            description="Enable position tracking and intelligent sizing")
+    conviction_sizing_enabled: bool = Field(default=True, alias="CONVICTION_SIZING_ENABLED",
+                                            description="Enable conviction-based trade sizing")
+    target_hedge_ratio: float = Field(default=0.25, alias="TARGET_HEDGE_RATIO", ge=0, le=1,
+                                      description="Only copy hedges when target's hedge ratio >= this")
+    time_urgency_multiplier: float = Field(default=2.0, alias="TIME_URGENCY_MULTIPLIER", ge=1, le=4,
+                                           description="Max size multiplier for time urgency")
+    major_scale_threshold: float = Field(default=3.0, alias="MAJOR_SCALE_THRESHOLD", ge=2, le=10,
+                                         description="Threshold for detecting major scale-ins")
 
     # Paper trading
     initial_balance: float = Field(default=1200.0, alias="INITIAL_BALANCE", ge=100)
+    simulate_real_market: bool = Field(default=False, alias="SIMULATE_REAL_MARKET",
+                                       description="Simulate real market conditions with delays and partial fills")
 
     # Asset ratios
     btc_copy_ratio: float = Field(default=1.0, alias="BTC_COPY_RATIO", ge=0, le=5)
@@ -76,6 +104,7 @@ class BotConfig(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "extra": "ignore",
+        "populate_by_name": True,  # Allow setting by field name, not just alias
     }
 
     @field_validator("min_price")
@@ -97,7 +126,19 @@ class BotConfig(BaseSettings):
             "max_slippage": self.max_slippage,
             "poll_interval": self.poll_interval,
             "skip_opposite_side": self.skip_opposite_side,
+            "outcome_filter": self.outcome_filter,
+            "auto_detect_pattern": self.auto_detect_pattern,
+            "pattern_window_size": self.pattern_window_size,
+            "pattern_bias_threshold": self.pattern_bias_threshold,
+            "hedge_detection_enabled": self.hedge_detection_enabled,
+            "hedge_time_window": self.hedge_time_window,
+            "position_tracking_enabled": self.position_tracking_enabled,
+            "conviction_sizing_enabled": self.conviction_sizing_enabled,
+            "target_hedge_ratio": self.target_hedge_ratio,
+            "time_urgency_multiplier": self.time_urgency_multiplier,
+            "major_scale_threshold": self.major_scale_threshold,
             "initial_balance": self.initial_balance,
+            "simulate_real_market": self.simulate_real_market,
             "asset_ratios": {
                 "BTC": self.btc_copy_ratio,
                 "ETH": self.eth_copy_ratio,

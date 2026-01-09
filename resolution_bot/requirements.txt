@@ -1,0 +1,5 @@
+# Resolution Friction Farm Bot Dependencies
+# Most dependencies shared with main bot
+
+httpx>=0.24.0
+python-dotenv>=1.0.0

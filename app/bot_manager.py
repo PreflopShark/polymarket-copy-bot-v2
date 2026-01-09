@@ -50,13 +50,16 @@ class WebSocketManager:
     async def broadcast(self, message: Dict[str, Any]) -> None:
         """Broadcast a message to all connected clients."""
         if not self._connections:
+            logger.debug(f"No WS connections to broadcast to (msg type: {message.get('type')})")
             return
 
+        logger.debug(f"Broadcasting to {len(self._connections)} clients: {message.get('type')}")
         disconnected = set()
         for ws in self._connections:
             try:
                 await ws.send_json(message)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"WS send error: {e}")
                 disconnected.add(ws)
 
         for ws in disconnected:
@@ -90,6 +93,7 @@ class BotManager:
 
         # Subscribe to all events for WebSocket broadcasting
         self._event_bus.subscribe_all(self._handle_event)
+        logger.info(f"BotManager initialized with EventBus id={id(self._event_bus)}")
 
     @property
     def state(self) -> BotState:
@@ -108,6 +112,10 @@ class BotManager:
 
     async def _handle_event(self, event: Event) -> None:
         """Handle events from the EventBus and broadcast to WebSocket clients."""
+        # Log trade events at INFO level for visibility
+        if event.type in (EventType.TRADE_DETECTED, EventType.TRADE_COPIED, EventType.TRADE_SKIPPED):
+            logger.info(f"Event: {event.type.value} -> {self._ws_manager.connection_count} clients")
+
         # Convert event to WebSocket message format
         message = self._event_to_message(event)
 
@@ -173,8 +181,12 @@ class BotManager:
         # Create executor (paper trader for dry run mode)
         executor = None
         if config.dry_run:
-            executor = PaperTrader(config.initial_balance)
+            executor = PaperTrader(
+                initial_balance=config.initial_balance,
+                simulate_real_market=config.simulate_real_market,
+            )
 
+        logger.info(f"Creating CopyBot with EventBus id={id(self._event_bus)}")
         return CopyBot(
             config=config,
             event_bus=self._event_bus,
@@ -274,6 +286,32 @@ class BotManager:
             "message": "Bot stopped",
             "summary": self._session_summary,
         }
+
+    async def kill(self) -> Dict[str, Any]:
+        """Force kill the bot immediately without graceful shutdown."""
+        if self._state not in (BotState.RUNNING, BotState.STARTING, BotState.STOPPING):
+            return {"success": False, "error": f"Bot is not running (state: {self._state.value})"}
+
+        logger.warning("Force killing bot")
+
+        # Cancel the task immediately
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+
+        self._state = BotState.STOPPED
+        self._bot = None
+        self._task = None
+
+        await self._ws_manager.broadcast({
+            "type": "state",
+            "state": self._state.value,
+        })
+
+        return {"success": True, "message": "Bot force killed"}
 
     def get_status(self) -> Dict[str, Any]:
         """Get current bot status."""

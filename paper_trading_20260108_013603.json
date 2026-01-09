@@ -1,0 +1,16 @@
+{
+  "summary": {
+    "runtime_hours": 0.03,
+    "initial_balance": 1500.0,
+    "current_usdc": 1500.0,
+    "portfolio_value": 1500.0,
+    "pnl": 0.0,
+    "pnl_percent": 0.0,
+    "trades_detected": 0,
+    "trades_copied": 0,
+    "trades_skipped": 0,
+    "open_positions": 0
+  },
+  "positions": [],
+  "trades": []
+}

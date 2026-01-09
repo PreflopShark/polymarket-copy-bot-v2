@@ -1,0 +1,198 @@
+{
+  "summary": {
+    "runtime_hours": 0.03,
+    "initial_balance": 100000.0,
+    "current_usdc": 99886.87,
+    "portfolio_value": 100000.0,
+    "pnl": -0.0,
+    "pnl_percent": -0.0,
+    "trades_detected": 14,
+    "trades_copied": 14,
+    "trades_skipped": 0,
+    "open_positions": 5
+  },
+  "positions": [
+    {
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "size": 41.855356199999996,
+      "entry_price": 0.4558402682999983,
+      "entry_time": "2026-01-06T22:00:36.195632",
+      "usdc_spent": 19.079356799999996
+    },
+    {
+      "token_id": "112047379035748222171218369185002052152479031862386413192847261802360760355632",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "size": 75.30000000000001,
+      "entry_price": 0.45920318725099596,
+      "entry_time": "2026-01-06T22:00:36.201034",
+      "usdc_spent": 34.578
+    },
+    {
+      "token_id": "22618821145101896309365004262115991851804922841629049761938838155491651504571",
+      "market_name": "Bitcoin Up or Down - January 7, 1:00AM-1:15AM ET",
+      "size": 59.9385,
+      "entry_price": 0.56506544207813,
+      "entry_time": "2026-01-06T22:00:36.213883",
+      "usdc_spent": 33.869175
+    },
+    {
+      "token_id": "77444648220970643495854896866395380237142409037641645690869554430089243491485",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "size": 28.17564885,
+      "entry_price": 0.5688298159635816,
+      "entry_time": "2026-01-06T22:01:06.958028",
+      "usdc_spent": 16.02714915
+    },
+    {
+      "token_id": "76247908274340660990100315474020297924428088901806642660808679595478895376074",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "size": 17.41213305,
+      "entry_price": 0.5500000012922024,
+      "entry_time": "2026-01-06T22:01:37.619316",
+      "usdc_spent": 9.5766732
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-06T22:00:36.195638",
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 2.6999999999999997,
+      "price": 0.45,
+      "usdc_amount": 2.6999999999999997,
+      "original_trade_amount": 18.0
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.198417",
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 13.868999999999998,
+      "price": 0.46,
+      "usdc_amount": 13.868999999999998,
+      "original_trade_amount": 92.46
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.201038",
+      "token_id": "112047379035748222171218369185002052152479031862386413192847261802360760355632",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 17.319,
+      "price": 0.46,
+      "usdc_amount": 17.319,
+      "original_trade_amount": 115.46
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.203510",
+      "token_id": "112047379035748222171218369185002052152479031862386413192847261802360760355632",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 17.259,
+      "price": 0.458406374501992,
+      "usdc_amount": 17.259,
+      "original_trade_amount": 115.06
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.206030",
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 1.16089275,
+      "price": 0.4400000022741119,
+      "usdc_amount": 1.16089275,
+      "original_trade_amount": 7.739285
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.208392",
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 1.16089275,
+      "price": 0.4400000022741119,
+      "usdc_amount": 1.16089275,
+      "original_trade_amount": 7.739285
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.211079",
+      "token_id": "89464101044701771609844075917775993735056717645222989481716117549945601618201",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 0.1885713,
+      "price": 0.44000014000014,
+      "usdc_amount": 0.1885713,
+      "original_trade_amount": 1.257142
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.213886",
+      "token_id": "22618821145101896309365004262115991851804922841629049761938838155491651504571",
+      "market_name": "Bitcoin Up or Down - January 7, 1:00AM-1:15AM ET",
+      "side": "BUY",
+      "size": 25.7355,
+      "price": 0.57,
+      "usdc_amount": 25.7355,
+      "original_trade_amount": 171.57
+    },
+    {
+      "timestamp": "2026-01-06T22:00:36.216292",
+      "token_id": "22618821145101896309365004262115991851804922841629049761938838155491651504571",
+      "market_name": "Bitcoin Up or Down - January 7, 1:00AM-1:15AM ET",
+      "side": "BUY",
+      "size": 8.133675,
+      "price": 0.55,
+      "usdc_amount": 8.133675,
+      "original_trade_amount": 54.2245
+    },
+    {
+      "timestamp": "2026-01-06T22:01:06.958032",
+      "token_id": "77444648220970643495854896866395380237142409037641645690869554430089243491485",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 2.61,
+      "price": 0.58,
+      "usdc_amount": 2.61,
+      "original_trade_amount": 17.4
+    },
+    {
+      "timestamp": "2026-01-06T22:01:06.960546",
+      "token_id": "77444648220970643495854896866395380237142409037641645690869554430089243491485",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 0.855,
+      "price": 0.57,
+      "usdc_amount": 0.855,
+      "original_trade_amount": 5.7
+    },
+    {
+      "timestamp": "2026-01-06T22:01:37.609130",
+      "token_id": "77444648220970643495854896866395380237142409037641645690869554430089243491485",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 4.16978565,
+      "price": 0.5800000083457528,
+      "usdc_amount": 4.16978565,
+      "original_trade_amount": 27.798571
+    },
+    {
+      "timestamp": "2026-01-06T22:01:37.613056",
+      "token_id": "77444648220970643495854896866395380237142409037641645690869554430089243491485",
+      "market_name": "Solana Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 8.3923635,
+      "price": 0.5600000016014559,
+      "usdc_amount": 8.3923635,
+      "original_trade_amount": 55.94909
+    },
+    {
+      "timestamp": "2026-01-06T22:01:37.619319",
+      "token_id": "76247908274340660990100315474020297924428088901806642660808679595478895376074",
+      "market_name": "Ethereum Up or Down - January 7, 1AM ET",
+      "side": "BUY",
+      "size": 9.5766732,
+      "price": 0.5500000012922024,
+      "usdc_amount": 9.5766732,
+      "original_trade_amount": 63.844488
+    }
+  ]
+}

@@ -1,6 +1,5 @@
-# Environment
+# Environment and secrets
 .env
-.env.local
 *.env
 
 # Python
@@ -9,12 +8,11 @@ __pycache__/
 *$py.class
 .Python
 venv/
-.venv/
 env/
+.venv/
 
 # Logs
 *.log
-logs/
 
 # IDE
 .vscode/
@@ -25,7 +23,3 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
-
-# Data
-*.db
-*.sqlite

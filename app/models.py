@@ -22,7 +22,9 @@ class ConfigUpdateRequest(BaseModel):
     max_slippage: Optional[float] = None
     poll_interval: Optional[float] = None
     skip_opposite_side: Optional[bool] = None
+    outcome_filter: Optional[str] = None  # 'all', 'up', or 'down'
     initial_balance: Optional[float] = None
+    simulate_real_market: Optional[bool] = None
     asset_ratios: Optional[AssetRatios] = None
 
 

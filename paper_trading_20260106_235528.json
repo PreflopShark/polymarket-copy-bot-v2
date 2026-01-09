@@ -1,0 +1,370 @@
+{
+  "summary": {
+    "runtime_hours": 0.03,
+    "initial_balance": 100000.0,
+    "current_usdc": 99935.83,
+    "portfolio_value": 100000.0,
+    "pnl": 0.0,
+    "pnl_percent": 0.0,
+    "trades_detected": 32,
+    "trades_copied": 32,
+    "trades_skipped": 0,
+    "open_positions": 4
+  },
+  "positions": [
+    {
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "size": 68.6658009570005,
+      "entry_price": 0.35293159494601806,
+      "entry_time": "2026-01-06T23:53:48.881125",
+      "usdc_spent": 24.23433065
+    },
+    {
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "size": 43.99780388554953,
+      "entry_price": 0.6385432685022547,
+      "entry_time": "2026-01-06T23:53:48.886406",
+      "usdc_spent": 28.0945015
+    },
+    {
+      "token_id": "54941371759393367869527326448321711229287719482659494322319076974196686363549",
+      "market_name": "Ethereum Up or Down - January 7, 2AM ET",
+      "size": 1.1904761904761905,
+      "entry_price": 0.84,
+      "entry_time": "2026-01-06T23:54:51.909156",
+      "usdc_spent": 1.0
+    },
+    {
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "size": 36.22863978494623,
+      "entry_price": 0.29938068512599275,
+      "entry_time": "2026-01-06T23:55:23.449904",
+      "usdc_spent": 10.846155
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-01-06T23:53:48.881131",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0574776000000001,
+      "price": 0.3300000026525385,
+      "usdc_amount": 1.0574776000000001,
+      "original_trade_amount": 21.149552
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.884157",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.77692305,
+      "price": 0.35,
+      "usdc_amount": 1.77692305,
+      "original_trade_amount": 35.538461
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.886410",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.66,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 3.3
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.888544",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.26293,
+      "price": 0.34,
+      "usdc_amount": 1.26293,
+      "original_trade_amount": 25.2586
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.890908",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.3500000063756749,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 10.97923
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.893210",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.35,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 13.258
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.895592",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.34,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 10.6012
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.898125",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.34000001034358157,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 8.546363
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.900784",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.3400000110664028,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 2.45789
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.903270",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 5.5685,
+      "price": 0.37,
+      "usdc_amount": 5.5685,
+      "original_trade_amount": 111.37
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.905701",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.67,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 6.7
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.908094",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.67,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 6.7
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.910556",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.34,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 17.0
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.912841",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.67,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 8.04
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.915213",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.3300000047146579,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 8.399337
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.918067",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 9.4815,
+      "price": 0.63,
+      "usdc_amount": 9.4815,
+      "original_trade_amount": 189.63
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.920663",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.67,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 13.4
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.922974",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 10.535,
+      "price": 0.7,
+      "usdc_amount": 10.535,
+      "original_trade_amount": 210.7
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.925244",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.33,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 4.95
+    },
+    {
+      "timestamp": "2026-01-06T23:53:48.927455",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.33,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 17.0544
+    },
+    {
+      "timestamp": "2026-01-06T23:54:20.426820",
+      "token_id": "17603545402774514829779671716276621059413058694378064676229967844012342505463",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 5.5685,
+      "price": 0.37,
+      "usdc_amount": 5.5685,
+      "original_trade_amount": 111.37
+    },
+    {
+      "timestamp": "2026-01-06T23:54:51.909160",
+      "token_id": "54941371759393367869527326448321711229287719482659494322319076974196686363549",
+      "market_name": "Ethereum Up or Down - January 7, 2AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.84,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 8.7444
+    },
+    {
+      "timestamp": "2026-01-06T23:54:51.911846",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.48,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 0.576
+    },
+    {
+      "timestamp": "2026-01-06T23:54:51.914560",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0780015,
+      "price": 0.4800000017810736,
+      "usdc_amount": 1.0780015,
+      "original_trade_amount": 21.56003
+    },
+    {
+      "timestamp": "2026-01-06T23:54:51.917089",
+      "token_id": "68768768865194890936746658683747648013812010613147079677471665946869012108460",
+      "market_name": "Bitcoin Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.48,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 19.68
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.449909",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.815,
+      "price": 0.3,
+      "usdc_amount": 1.815,
+      "original_trade_amount": 36.3
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.453637",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.815,
+      "price": 0.3,
+      "usdc_amount": 1.815,
+      "original_trade_amount": 36.3
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.456020",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.586155,
+      "price": 0.29,
+      "usdc_amount": 1.586155,
+      "original_trade_amount": 31.7231
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.458616",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.815,
+      "price": 0.3,
+      "usdc_amount": 1.815,
+      "original_trade_amount": 36.3
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.461126",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.3,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 6.753
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.463482",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.815,
+      "price": 0.3,
+      "usdc_amount": 1.815,
+      "original_trade_amount": 36.3
+    },
+    {
+      "timestamp": "2026-01-06T23:55:23.466312",
+      "token_id": "92801002858076764384616303450926298761963322392140630275128353058348751720831",
+      "market_name": "Ethereum Up or Down - January 7, 2:45AM-3:00AM ET",
+      "side": "BUY",
+      "size": 1.0,
+      "price": 0.31,
+      "usdc_amount": 1.0,
+      "original_trade_amount": 2.2444
+    }
+  ]
+}

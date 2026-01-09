@@ -172,6 +172,18 @@ async def stop_bot():
     return result
 
 
+@router.post("/bot/kill")
+async def kill_bot():
+    """Force kill the bot immediately without cleanup."""
+    manager = get_bot_manager()
+    result = await manager.kill()
+
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+
+    return result
+
+
 @router.get("/portfolio")
 async def get_portfolio():
     """Get current portfolio state."""
@@ -197,3 +209,94 @@ async def get_session_summary():
         return {"summary": None, "message": "No session data available"}
 
     return {"summary": summary}
+
+
+@router.get("/portfolio/check-resolved")
+async def check_resolved_markets():
+    """
+    Check for resolved markets and automatically redeem positions.
+
+    For paper trading, this checks the Polymarket API for resolved markets
+    and automatically settles positions, updating the balance and realized PnL.
+    """
+    manager = get_bot_manager()
+    portfolio = manager.get_portfolio()
+
+    if not portfolio.get("positions"):
+        return {
+            "resolved_positions": [],
+            "newly_resolved": [],
+            "total_resolved_pnl": portfolio.get("realized_pnl", 0),
+            "message": "No positions to check"
+        }
+
+    newly_resolved = []
+    total_pnl = 0
+
+    # Get the paper trader to redeem positions
+    paper_trader = None
+    if manager._bot and manager._bot.executor:
+        from ..services.paper_trader import PaperTrader
+        if isinstance(manager._bot.executor, PaperTrader):
+            paper_trader = manager._bot.executor
+
+    # Check each position against resolved markets
+    async with aiohttp.ClientSession() as session:
+        for position in portfolio.get("positions", []):
+            token_id = position.get("token_id")
+            if not token_id:
+                continue
+
+            try:
+                # Check market status via gamma API
+                url = f"https://gamma-api.polymarket.com/markets?token_id={token_id}"
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data and len(data) > 0:
+                            market = data[0]
+
+                            # Check if market is resolved
+                            if market.get("closed") or market.get("resolved"):
+                                # Determine resolution price based on outcome
+                                # The token we hold is either YES or NO
+                                # If outcome matches our token, we win (price = 1.0)
+                                outcome = market.get("outcome")
+                                outcome_prices = market.get("outcomePrices", [])
+
+                                # Get resolution price for this specific token
+                                tokens = market.get("clobTokenIds", [])
+                                resolution_price = 0.0
+                                if tokens and token_id in tokens:
+                                    idx = tokens.index(token_id)
+                                    if outcome_prices and len(outcome_prices) > idx:
+                                        try:
+                                            resolution_price = float(outcome_prices[idx])
+                                        except (ValueError, TypeError):
+                                            # If outcome is truthy and this is first token (YES), price is 1
+                                            resolution_price = 1.0 if outcome and idx == 0 else 0.0
+
+                                # Redeem the position if we have paper trader
+                                if paper_trader:
+                                    result = paper_trader.redeem_position(token_id, resolution_price)
+                                    if result:
+                                        result["resolved_at"] = market.get("end_date_iso") or market.get("end_date")
+                                        newly_resolved.append(result)
+                                        total_pnl += result.get("pnl", 0)
+                                        logger.info(f"Auto-redeemed: {result['market']} | PnL: ${result['pnl']:.2f}")
+
+            except Exception as e:
+                logger.warning(f"Error checking market resolution for {token_id}: {e}")
+                continue
+
+    # Get updated stats
+    updated_portfolio = manager.get_portfolio()
+
+    return {
+        "newly_resolved": newly_resolved,
+        "total_newly_resolved_pnl": total_pnl,
+        "total_realized_pnl": updated_portfolio.get("realized_pnl", 0),
+        "resolved_positions": updated_portfolio.get("resolved_positions", []),
+        "positions_checked": len(portfolio.get("positions", [])),
+        "positions_remaining": updated_portfolio.get("positions_count", 0),
+    }
